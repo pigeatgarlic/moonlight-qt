@@ -654,66 +654,14 @@ int main(int argc, char *argv[])
         qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
     }
 
-    QQmlApplicationEngine engine;
-    QString initialView;
-    bool hasGUI = true;
-
-    switch (commandLineParserResult) {
-    case GlobalCommandLineParser::NormalStartRequested:
-        initialView = "qrc:/gui/PcView.qml";
-        break;
-    case GlobalCommandLineParser::StreamRequested:
-        {
-            initialView = "qrc:/gui/CliStartStreamSegue.qml";
-            StreamingPreferences* preferences = new StreamingPreferences(&app);
-            StreamCommandLineParser streamParser;
-            streamParser.parse(app.arguments(), preferences);
-            QString host    = streamParser.getHost();
-            QString appName = streamParser.getAppName();
-            auto launcher   = new CliStartStream::Launcher(host, appName, preferences, &app);
-            engine.rootContext()->setContextProperty("launcher", launcher);
-            break;
-        }
-    case GlobalCommandLineParser::QuitRequested:
-        {
-            initialView = "qrc:/gui/CliQuitStreamSegue.qml";
-            QuitCommandLineParser quitParser;
-            quitParser.parse(app.arguments());
-            auto launcher = new CliQuitStream::Launcher(quitParser.getHost(), &app);
-            engine.rootContext()->setContextProperty("launcher", launcher);
-            break;
-        }
-    case GlobalCommandLineParser::PairRequested:
-        {
-            initialView = "qrc:/gui/CliPair.qml";
-            PairCommandLineParser pairParser;
-            pairParser.parse(app.arguments());
-            auto launcher = new CliPair::Launcher(pairParser.getHost(), pairParser.getPredefinedPin(), &app);
-            engine.rootContext()->setContextProperty("launcher", launcher);
-            break;
-        }
-    case GlobalCommandLineParser::ListRequested:
-        {
-            ListCommandLineParser listParser;
-            listParser.parse(app.arguments());
-            auto launcher = new CliListApps::Launcher(listParser.getHost(), listParser, &app);
-            launcher->execute(new ComputerManager(&app));
-            hasGUI = false;
-            break;
-        }
-    }
-
-    if (hasGUI) {
-        engine.rootContext()->setContextProperty("initialView", initialView);
-
-        // Load the main.qml file
-        engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
-        if (engine.rootObjects().isEmpty())
-            return -1;
-    }
 
     int err = app.exec();
 
+    NvHTTP http(m_Address, 0, QSslCertificate());
+    NvComputer* newComputer = new NvComputer(http, serverInfo);
+    NvApp* newApp = new NvApp();
+
+    new Session(newComputer,newApp)
     // Give worker tasks time to properly exit. Fixes PendingQuitTask
     // sometimes freezing and blocking process exit.
     QThreadPool::globalInstance()->waitForDone(30000);
