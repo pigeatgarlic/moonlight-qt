@@ -654,14 +654,17 @@ int main(int argc, char *argv[])
         qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
     }
 
+    QQmlApplicationEngine engine;
+    auto initialView = "qrc:/gui/CliStartStreamSegue.qml";
+    StreamingPreferences* preferences = new StreamingPreferences(&app);
+    StreamCommandLineParser streamParser;
+    streamParser.parse(app.arguments(), preferences);
+    QString host    = streamParser.getHost();
+    QString appName = streamParser.getAppName();
+    auto launcher   = new CliStartStream::Launcher(host, appName, preferences, &app);
+    engine.rootContext()->setContextProperty("launcher", launcher);
 
     int err = app.exec();
-
-    NvHTTP http(m_Address, 0, QSslCertificate());
-    NvComputer* newComputer = new NvComputer(http, serverInfo);
-    NvApp* newApp = new NvApp();
-
-    new Session(newComputer,newApp)
     // Give worker tasks time to properly exit. Fixes PendingQuitTask
     // sometimes freezing and blocking process exit.
     QThreadPool::globalInstance()->waitForDone(30000);
